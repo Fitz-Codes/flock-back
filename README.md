@@ -1,5 +1,6 @@
 # FlockBack — AI Camera Detection Toolkit
-![Flock-Back Banner](https://github.com/user-attachments/assets/81829f0c-b241-4099-addd-c09e106f187a)
+
+#THIS IS A FORK OF THE OG REPO THAT IS BEING OPTIMIZED FOR RASP PI
 
 > **v2.0** — Newer Flock cameras no longer advertise via BLE. They now reveal themselves through **WiFi probe requests**. FlockBack detects both, running BLE and WiFi sniffers in parallel so no camera gets missed regardless of firmware version.
 
