@@ -20,6 +20,7 @@ import threading, os, time, os, subprocess, json, argparse, textwrap, manuf
 from gps3 import gps3
 from datetime import datetime
 from pathlib import Path
+from functools import lru_cache
 
 
 
@@ -49,6 +50,8 @@ class DataBase():
 
 
         encryption_cache = {}
+        manuf_parser = None
+        vendor_database = None
 
 
         @staticmethod
@@ -127,7 +130,10 @@ class DataBase():
 
                 manuf_path = str(Path(__file__).parent.parent / "database" / "manuf_old.txt")
 
-                vendor = manuf.MacParser(manuf_path).get_manuf_long(mac=mac)
+                if cls.manuf_parser is None:
+                    cls.manuf_parser = manuf.MacParser(manuf_path)
+
+                vendor = cls.manuf_parser.get_manuf_long(mac=mac)
                 
                 if verbose:
                     console.print(f"Manuf.txt pulled -> {manuf_path}")            
@@ -146,30 +152,28 @@ class DataBase():
                 console.print(f"[bold red][-] Exception Error:[bold yellow] {e}"); exit()
         
 
-        @staticmethod
-        def _get_vendor_new(mac: str, verbose=True) -> str:
+        @classmethod
+        def _get_vendor_new(cls, mac: str, verbose=True) -> str:
             """MAC Prefixes --> Vendor"""
             
 
             try:
 
-                manuf_path = str(Path(__file__).parent.parent / "database" / "manuf_ring_mast4r.txt")
+                if cls.vendor_database is None:
+                    manuf_path = Path(__file__).parent.parent / "database" / "manuf_ring_mast4r.txt"
+                    with open(manuf_path, "r") as file:
+                        cls.vendor_database = {
+                            parts[0].upper(): parts[1]
+                            for line in file
+                            if len(parts := line.strip().split('\t')) >= 2
+                            and not parts[0].startswith("#")
+                        }
 
-                mac_prefix = mac.split(':'); prefix = mac_prefix[0] + mac_prefix[1] + mac_prefix[2]
-
-
-                with open(manuf_path, "r") as file:
-
-                    for line in file:
-                        parts = line.strip().split('\t')
-                        
-                        if parts[0] == prefix:
-
-                            vendor = parts[1]
-
-                            if verbose: console.print(f"[bold green][+] {parts[0]} --> {vendor}" )
-                            
-                            return vendor
+                prefix = "".join(mac.split(":")[:3]).upper()
+                vendor = cls.vendor_database.get(prefix)
+                if vendor and verbose:
+                    console.print(f"[bold green][+] {prefix} --> {vendor}")
+                return vendor
 
 
             except FileNotFoundError:
@@ -181,6 +185,7 @@ class DataBase():
         
 
         @staticmethod
+        @lru_cache(maxsize=4096)
         def get_vendor_main(mac: str, verbose=False) -> str:
             """This will use ringmast4r and wireshark vendor database"""
 
@@ -194,6 +199,18 @@ class DataBase():
     
     class Bluetooth():
         """This will be the subclass for bluetooth"""
+
+        company_ids = None
+
+
+        @classmethod
+        def _get_company_ids(cls):
+            if cls.company_ids is None:
+                path = Path(__file__).parent.parent / "database" / "bluetooth_sig" / "assigned_numbers" / "company_identifiers" / "company_ids.json"
+                with open(path, "r") as file:
+                    cls.company_ids = json.load(file)
+
+            return cls.company_ids
 
             
         @staticmethod
@@ -388,27 +405,11 @@ class DataBase():
 
             try:
 
-                path = Path(__file__).parent.parent / "database" / "bluetooth_sig" / "assigned_numbers" / "company_identifiers" / "company_ids.json"
-                
-                if not path.exists(): console.print("[bold red][-] Database Error: BLE path doesnt exist"); return False
-                
-
-                with open(str(path), "r") as file:
-                    company_ids = json.load(file)
-        
-
-                for key, value in company_ids.items():
-
-                    if int(key) == int(id):
-
-                        manufacturer = value["company"]
-
-                        if verbose: console.print(f"[bold green][+] {id} --> {manufacturer}")
-                        
-                        #if data: return f"{manufacturer} | {data}"
-                        return manufacturer
-                
-                return False
+                company_ids = DataBase.Bluetooth._get_company_ids()
+                manufacturer = company_ids.get(str(int(id)), {}).get("company")
+                if manufacturer and verbose:
+                    console.print(f"[bold green][+] {id} --> {manufacturer}")
+                return manufacturer or False
 
 
 
@@ -684,4 +685,3 @@ class Background_Threads():
 
         cls.hop = True
         threading.Thread(target=hopper, args=(), daemon=True).start()
-
