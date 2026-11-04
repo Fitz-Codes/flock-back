@@ -17,25 +17,11 @@ Python tool for detecting **AI-powered license plate reader (LPR) cameras** (Flo
 
 ## Dependencies
 
-**Python 3.10+**, and the following system packages:
+**Python 3.10+** and the Python packages in `requirements.txt` are required on all platforms.
 
-**BlueZ (Bluetooth):**
-```bash
-sudo apt update && sudo apt install bluez bluez-tools bluez-firmware -y
-sudo systemctl enable bluetooth && sudo systemctl start bluetooth
-systemctl status bluetooth
-```
+**Linux:** Install BlueZ for Bluetooth scanning and Wireshark/tshark for Wi-Fi packet capture. Wi-Fi scanning requires an adapter and driver that support monitor mode.
 
-**tshark (Wi-Fi packet capture):**
-```bash
-sudo apt install tshark -y
-```
-> During install, select **Yes** when asked to allow non-superusers to capture packets, or run with `sudo`.
-
-**Python packages:**
-```bash
-pip install -r requirements.txt
-```
+**Windows:** BLE scanning works with a Bluetooth adapter supported by Windows. Wi-Fi packet capture is optional and requires Wireshark (including `tshark`), Npcap, and a wireless adapter/driver that supports monitor mode capture. Windows adapter support varies; channel hopping and wardriver mode are not available on Windows. FlockBack does not change Windows wireless adapter modes.
 
 > **Troubleshooting Bluetooth:** See `setup/setup_ble.txt` for additional configuration help.
 
@@ -51,6 +37,17 @@ python3 -m venv venv
 source venv/bin/activate
 pip install -r ../requirements.txt
 ```
+
+**Windows PowerShell:**
+```powershell
+git clone https://github.com/NSM-Barii/flock-back
+cd flock-back
+py -3 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+cd src
+..\.venv\Scripts\python.exe main.py
+```
+This starts BLE scanning and the local web dashboard. To try Wi-Fi scanning, install Wireshark with Npcap, check `tshark -D` for the capture interface name, then run `..\.venv\Scripts\python.exe main.py -i "<interface name>"`. The adapter must support Npcap monitor mode; if it does not, use BLE-only mode. On Windows, the selected adapter stays on its current channel.
 
 **Run:**
 ```bash

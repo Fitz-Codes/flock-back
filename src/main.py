@@ -3,6 +3,7 @@
 
 # IMPORTS
 import argparse
+import os
 from pathlib import Path
 
 # NSM MODULES
@@ -52,6 +53,9 @@ class Main_UI():
 
 
         args = parser.parse_args()
+
+        if args.w and os.name == "nt":
+            parser.error("Wardriver mode requires Linux wireless tools and is not supported on Windows.")
 
         help              = args.h or False
         Variables.bface   = args.b   or "hci0"
