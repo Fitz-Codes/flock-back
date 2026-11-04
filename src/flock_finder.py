@@ -12,7 +12,7 @@ from bleak import BleakScanner
 
 
 # ETC IMPORTS
-import time, asyncio, threading, subprocess
+import time, asyncio, threading, subprocess, os
 from datetime import datetime
 
 
@@ -414,6 +414,8 @@ class WiFi_Sniffer():
         if isinstance(ifaces, str): ifaces = [ifaces]
 
         cmd = ["tshark"]
+        if os.name == "nt":
+            cmd.append("-I")
         for iface in ifaces: cmd += ["-i", iface]
         cmd += [
             "-l",
@@ -569,7 +571,9 @@ class Inject_Test():
         console.print(f"[bold green][+] Inject test on [bold yellow]{iface}[bold green] — listening for probe requests (Ctrl+C to stop)...")
 
         cmd = [
-            "tshark", "-i", iface,
+            "tshark",
+            *(["-I"] if os.name == "nt" else []),
+            "-i", iface,
             "-l",
             "-Y", "wlan.fc.type_subtype == 0x04",
             "-T", "fields",

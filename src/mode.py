@@ -35,7 +35,10 @@ class Mode():
     def change_mode(iface, mode):
         """Change mode"""
 
-        
+        if os.name == "nt":
+            print("Changing wireless mode with Linux tools is not supported on Windows.")
+            return
+
         subprocess.run(f"sudo ip link set {iface} down; sudo iw dev {iface} set type {mode}; sudo ip link set {iface} up", shell=True)
         subprocess.run('iwconfig', shell=True)
     

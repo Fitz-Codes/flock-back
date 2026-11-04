@@ -587,7 +587,13 @@ class Utilities():
     def get_monitor_mode(cls, iface, mode="monitor", verbose=False):
         """This will validate the iface given and try to put it in monitor mode"""
 
-      
+        if os.name == "nt":
+            console.print(
+                "[bold yellow]Windows cannot configure monitor mode with Linux wireless tools. "
+                "Use a monitor-capable adapter with Npcap; no interface changes were made."
+            )
+            return
+
         subprocess.run(f"sudo ip link set {iface} down; sudo iw dev {iface} set type {mode}; sudo ip link set {iface} up", shell=True)
         subprocess.run('iwconfig', shell=True); time.sleep(1.5)
 
@@ -643,6 +649,9 @@ class Background_Threads():
     def channel_hopper(cls, iface, channels=None, set_channel=False, verbose=False):
         """This method will be responsible for automatically hopping channels"""
 
+        if os.name == "nt":
+            console.print("[bold yellow]Channel hopping is not supported on Windows; the adapter will remain on its current channel.")
+            return
 
         def hopper():
 

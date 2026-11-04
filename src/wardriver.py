@@ -8,7 +8,7 @@ from rich.panel import Panel
 
 
 # ETC IMPORTS
-import subprocess
+import os, subprocess
 
 
 # NSM IMPORTS
@@ -98,6 +98,9 @@ class Wardriver():
     def main(cls):
         """Run from here"""
 
+        if os.name == "nt":
+            console.print("[bold red][!] Wardriver mode requires Linux wireless tools and is not supported on Windows.")
+            return False
 
         text = Panel("WarDriver Mode", style="bold red", border_style="bold purple", expand=False)
                       
